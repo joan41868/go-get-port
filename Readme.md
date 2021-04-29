@@ -16,15 +16,16 @@ go get github.com/joan41868/go-get-port@v0.1.0
 
 package main
 
+import (
+	"fmt"
 
-import ( 
-    gp "go_get_port"
-    "log"
-    )
+	gp "github.com/joan41868/go-get-port"
+)
 
-func main(){
-    port := gp.GetPort()
-    fmt.Println(port) // some random port
+func main() {
+	port := gp.GetPort()
+	fmt.Println(port) // some random port
 }
+
 
 ```
