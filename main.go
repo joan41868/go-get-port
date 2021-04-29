@@ -2,21 +2,22 @@ package go_get_port
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net/http"
-	"time"
 )
 
 const (
-	MIN_BOUNDARY = 1
-	MAX_BOUNDARY = 65536
+	MaxBoundary = 65536
 )
 
 func getRandomBetween() int {
-	rand.Seed(time.Now().UnixNano())
-	rnd := rand.Intn(MAX_BOUNDARY-MIN_BOUNDARY+1) + MIN_BOUNDARY
-	return rnd
+	rnd, err := rand.Int(rand.Reader, big.NewInt(MaxBoundary))
+	if err != nil {
+		panic(err)
+	}
+	return int(rnd.Int64())
 }
 
 func attemptGetPort() int {
@@ -24,19 +25,31 @@ func attemptGetPort() int {
 	srv := http.Server{
 		Addr: fmt.Sprintf(":%d", randPort),
 	}
+	flg := false
+	go func() {
+		err := srv.ListenAndServe()
+		if err != nil {
+			flg = true
+			return
+		}
+	}()
 
-	go srv.ListenAndServe()
-
-	srv.Shutdown(context.TODO())
+	_ = srv.Shutdown(context.TODO())
+	if flg {
+		return 0
+	}
 	return randPort
 }
 
 func GetPort() int {
+	locked := make(map[int]bool)
 	var i int
 	for {
 		i = attemptGetPort()
 		if i > 0 {
 			break
+		} else {
+			locked[i] = true
 		}
 	}
 	return i
